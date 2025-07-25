@@ -152,8 +152,6 @@ async function notifyTelegram(message) {
             }
 
             previousJobCount = jobCount;
-
-            console.log(`Sprawdzono: ${jobCount} zleceń.`);
          } catch (err) {
             console.error('Błąd podczas odświeżania lub sprawdzania:', err.message);
          }
