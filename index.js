@@ -67,7 +67,76 @@
 
 
 
-//Wysyła liczbe z licznika na stronie
+//Nie wysyła liczbe z licznika na stronie
+
+
+
+// require('dotenv').config();
+// const puppeteer = require('puppeteer');
+// const axios = require('axios');
+
+// let previousJobCount = 0;
+// let page, browser;
+
+// async function notifyTelegram(message) {
+//    const url = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`;
+//    await axios.post(url, {
+//       chat_id: process.env.TELEGRAM_CHAT_ID,
+//       text: message
+//    });
+// }
+
+// async function loginAndStartBrowser() {
+//    browser = await puppeteer.launch({
+//       headless: "new",
+//       args: ['--no-sandbox', '--disable-setuid-sandbox'] // wymagane na Railway
+//    });
+
+//    page = await browser.newPage();
+
+//    await page.goto('https://bws.onsinch.com/', { waitUntil: 'networkidle2' });
+
+//    await page.type('input[type="email"]', process.env.LOGIN);
+//    await page.type('input[type="password"]', process.env.PASSWORD);
+
+//    await Promise.all([
+//       page.click('input[type="submit"]'),
+//       page.waitForNavigation({ waitUntil: 'networkidle2' })
+//    ]);
+
+//    await page.goto('https://bws.onsinch.com/react/position', { waitUntil: 'networkidle2' });
+
+//    console.log("✅ Zalogowano i gotowe do monitorowania...");
+// }
+
+// async function checkJobs() {
+//    try {
+//       await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
+
+//       const countText = await page.$eval('p.MuiTablePagination-caption.MuiTypography-body2', el => el.innerText);
+//       const match = countText.match(/z\s+(\d+)/);
+//       const jobCount = match ? parseInt(match[1]) : 0;
+
+//       if (jobCount > previousJobCount) {
+//          await notifyTelegram(`📢 NOWE ZLECENIA! Było: ${previousJobCount}, jest: ${jobCount}`);
+//       }
+
+//       previousJobCount = jobCount;
+
+//    } catch (error) {
+//       console.error("❌ Błąd podczas sprawdzania:", error.message);
+//    }
+// }
+
+// // Główna funkcja uruchamiająca
+// (async () => {
+//    await loginAndStartBrowser();
+//    setInterval(checkJobs, 10000); // co 10s
+// })();
+
+
+
+
 
 
 
@@ -89,7 +158,7 @@ async function notifyTelegram(message) {
 async function loginAndStartBrowser() {
    browser = await puppeteer.launch({
       headless: "new",
-      args: ['--no-sandbox', '--disable-setuid-sandbox'] // wymagane na Railway
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] // potrzebne na Railway
    });
 
    page = await browser.newPage();
@@ -113,9 +182,18 @@ async function checkJobs() {
    try {
       await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
 
-      const countText = await page.$eval('p.MuiTablePagination-caption.MuiTypography-body2', el => el.innerText);
-      const match = countText.match(/z\s+(\d+)/);
+      const countText = await page.$$eval(
+         'p.MuiTablePagination-caption.MuiTypography-body2',
+         els => els.map(el => el.innerText)
+      );
+
+      const targetText = countText.find(text => /z\s+\d+/.test(text));
+      if (!targetText) throw new Error("Nie znaleziono tekstu z liczbą zleceń");
+
+      const match = targetText.match(/z\s+(\d+)/);
       const jobCount = match ? parseInt(match[1]) : 0;
+
+      console.log(`🔍 Sprawdzono: ${jobCount} zleceń.`);
 
       if (jobCount > previousJobCount) {
          await notifyTelegram(`📢 NOWE ZLECENIA! Było: ${previousJobCount}, jest: ${jobCount}`);
@@ -128,9 +206,8 @@ async function checkJobs() {
    }
 }
 
-// Główna funkcja uruchamiająca
 (async () => {
    await loginAndStartBrowser();
-   setInterval(checkJobs, 10000); // co 10s
+   setInterval(checkJobs, 10000);
 })();
 
