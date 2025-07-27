@@ -117,8 +117,6 @@ async function checkJobs() {
       const match = countText.match(/z\s+(\d+)/);
       const jobCount = match ? parseInt(match[1]) : 0;
 
-      console.log(`🔍 Sprawdzono: ${jobCount} zleceń.`);
-
       if (jobCount > previousJobCount) {
          await notifyTelegram(`📢 NOWE ZLECENIA! Było: ${previousJobCount}, jest: ${jobCount}`);
       }
