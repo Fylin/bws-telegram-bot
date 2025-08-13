@@ -138,7 +138,7 @@ async function checkJobs() {
 
 (async () => {
    await loginAndStartBrowser();
-   setInterval(checkJobs, 5000);
+   setInterval(checkJobs, 10000);
 })();
 
 
